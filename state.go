@@ -1051,7 +1051,7 @@ func (m *Memberlist) aliveNode(a *alive, notify chan struct{}, bootstrap bool) {
 				time.Since(state.StateChange) > m.config.DeadNodeReclaimTime)
 
 			// Allow the address to be updated if a dead node is being replaced.
-			if state.State == StateLeft || (state.State == StateDead && canReclaim) {
+			if m.config.AllowUpdateAdvertiseAddr || state.State == StateLeft || (state.State == StateDead && canReclaim) {
 				m.logger.Printf("[INFO] memberlist: Updating address for left or failed node %s from %v:%d to %v:%d",
 					state.Name, state.Addr, state.Port, net.IP(a.Addr), a.Port)
 				updatesNode = true

@@ -245,6 +245,10 @@ type Config struct {
 	// meaning nodes cannot be reclaimed this way.
 	DeadNodeReclaimTime time.Duration
 
+	// AllowUpdateAdvertiseAddr controls whether the AdvertiseAddr can be
+	// updated for an alive node.
+	AllowUpdateAdvertiseAddr bool
+
 	// RequireNodeNames controls if the name of a node is required when sending
 	// a message to that node.
 	RequireNodeNames bool

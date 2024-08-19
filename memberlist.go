@@ -229,7 +229,7 @@ func newMemberlist(conf *Config) (*Memberlist, error) {
 	// Get the final advertise address from the transport, which may need
 	// to see which address we bound to. We'll refresh this each time we
 	// send out an alive message.
-	if _, _, err := m.refreshAdvertise(); err != nil {
+	if _, _, err := m.refreshAdvertise(conf.AdvertiseAddr, conf.AdvertisePort); err != nil {
 		return nil, err
 	}
 
@@ -429,13 +429,7 @@ func (m *Memberlist) resolveAddr(hostStr string) ([]ipPort, error) {
 // as if we received an alive notification our own network channel for
 // ourself.
 func (m *Memberlist) setAlive() error {
-	// Get the final advertise address from the transport, which may need
-	// to see which address we bound to.
-	addr, port, err := m.refreshAdvertise()
-	if err != nil {
-		return err
-	}
-
+	addr, port := m.getAdvertise()
 	// Check if this is a public address without encryption
 	ipAddr, err := sockaddr.NewIPAddr(addr.String())
 	if err != nil {
@@ -486,14 +480,21 @@ func (m *Memberlist) setAdvertise(addr net.IP, port int) {
 	m.advertisePort = uint16(port)
 }
 
-func (m *Memberlist) refreshAdvertise() (net.IP, int, error) {
-	addr, port, err := m.transport.FinalAdvertiseAddr(
-		m.config.AdvertiseAddr, m.config.AdvertisePort)
+func (m *Memberlist) refreshAdvertise(addr string, port int) (net.IP, int, error) {
+	fAddr, fPort, err := m.transport.FinalAdvertiseAddr(addr, port)
 	if err != nil {
 		return nil, 0, fmt.Errorf("Failed to get final advertise address: %v", err)
 	}
-	m.setAdvertise(addr, port)
-	return addr, port, nil
+	m.setAdvertise(fAddr, fPort)
+	return fAddr, fPort, nil
+}
+
+func (m *Memberlist) UpdateAdvertiseAddr(addr string, port int) error {
+	_, _, err := m.refreshAdvertise(addr, port)
+	if err != nil {
+		return err
+	}
+	return m.setAlive()
 }
 
 // LocalNode is used to return the local Node
